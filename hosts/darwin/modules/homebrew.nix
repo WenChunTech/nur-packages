@@ -1,7 +1,4 @@
 {
-  ...
-}:
-{
   homebrew = {
     enable = true;
 

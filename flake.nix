@@ -10,7 +10,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nix-darwin.url = "github:nix-darwin/nix-darwin";
+    nix-darwin.url = "github:nix-darwin/nix-darwin/master";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -35,13 +35,27 @@
   outputs =
     {
       self,
-      nixpkgs,
       nix-darwin,
+      nixpkgs,
       home-manager,
       nix-homebrew,
+      homebrew-core,
+      homebrew-cask,
+      homebrew-bundle,
       ...
     }@inputs:
     let
+      # Define system architectures. User should verify/update these as needed.
+      # "MacBookPro" is assumed to be aarch64-darwin.
+      # "NixOS" is a placeholder for a NixOS host, assumed x86_64-linux.
+      vars = {
+        user = "fwc";
+        userEmail = "1643806656@qq.com";
+        userHome = "/Users/${vars.user}";
+        defaultShell = "zsh";
+        darwinSystemArch = "aarch64-darwin";
+        nixosSystemArch = "x86_64-linux";
+      };
       systems = [
         "i686-linux"
         "x86_64-linux"
@@ -62,8 +76,45 @@
         system: nixpkgs.lib.filterAttrs (_: v: nixpkgs.lib.isDerivation v) self.legacyPackages.${system}
       );
 
-      darwinConfigurations."FeiWenChunDeMacBook-Pro" = (import "${self}/hosts/darwin/default.nix") {
-        inherit inputs;
+      darwinConfigurations."MacBookPro" = nix-darwin.lib.darwinSystem {
+        system = vars.darwinSystemArch;
+        specialArgs = {
+          inherit inputs vars self;
+        };
+        modules = [
+          ./hosts/darwin/default.nix
+          home-manager.darwinModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              verbose = true;
+              users.${vars.user} = { pkgs, ... }: import ./common/home-manager/default.nix { inherit vars pkgs; };
+            };
+          }
+        ];
       };
+
+      nixosConfigurations."NixOS" = nixpkgs.lib.nixosSystem {
+        system = vars.nixosSystemArch;
+        specialArgs = {
+          inherit inputs vars;
+          hostName = "NixOS";
+        };
+        modules = [
+          ./hosts/nixos/default.nix
+          home-manager.nixosModules.home-manager
+        ];
+      };
+
+      # Expose the common library from common/lib/default.nix
+      lib = import ./common/lib/default.nix;
+
+      # legacyPackages and packages that relied on a root ./default.nix have been removed.
+      # Users can define overlays or specific packages to be exposed by the flake here if needed.
+      # Example for overlays:
+      # overlays.default = import ./overlays/default.nix;
+      # Example for packages:
+      # packages.${darwinSystemArch}.myTool = inputs.nixpkgs.legacyPackages.${darwinSystemArch}.callPackage ./pkgs/my-tool {};
     };
 }

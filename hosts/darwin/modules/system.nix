@@ -1,33 +1,5 @@
 {
-  pkgs,
-  ...
-}:
-{
   security.pam.services.sudo_local.touchIdAuth = true;
-  users.users.fwc = {
-    name = "fwc";
-    home = "/Users/fwc";
-  };
-
-  # List packages installed in system profile. To search by name, run:
-  # $ nix-env -qaP | grep wget
-  environment.systemPackages = with pkgs; [
-    git
-    # zsh-powerlevel10k
-  ];
-  environment.variables = {
-    EDITOR = "vim";
-  };
-
-  # programs.zsh.promptInit = "source ${pkgs.zsh-powerlevel10k}/share/zsh-powerlevel10k/powerlevel10k.zsh-theme";
-
-  fonts.packages = with pkgs; [
-    nerd-fonts.fira-code
-    nerd-fonts.jetbrains-mono
-  ];
-
-  # Used for backwards compatibility, please read the changelog before changing.
-  # $ darwin-rebuild changelog
   system = {
     stateVersion = 5;
     activationScripts.postUserActivation.text = ''

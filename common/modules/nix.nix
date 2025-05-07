@@ -1,10 +1,12 @@
+# common/modules/nix.nix
 {
+  vars,
   self,
   pkgs,
   ...
 }:
+
 {
-  # Set Git commit hash for darwin-version.
   system.configurationRevision = self.rev or self.dirtyRev or null;
 
   # Necessary for using flakes on this system.
@@ -14,7 +16,7 @@
       "nix-command"
       "flakes"
     ];
-    # substituers that will be considered before the official ones(https://cache.nixos.org)
+    # substituters that will be considered before the official ones(https://cache.nixos.org)
     substituters = [
       "https://mirror.sjtu.edu.cn/nix-channels/store"
       "https://nix-community.cachix.org"
@@ -25,7 +27,7 @@
 
     trusted-users = [
       "root"
-      "fwc"
+      "${vars.user}"
     ];
     trusted-substituters = [
       "https://mirror.sjtu.edu.cn/nix-channels/store"
@@ -37,5 +39,5 @@
   nix.package = pkgs.nix;
   nixpkgs.config.allowUnfree = true;
   # The platform the configuration will be used on.
-  nixpkgs.hostPlatform = "aarch64-darwin";
+  # nixpkgs.hostPlatform = "aarch64-darwin";
 }
