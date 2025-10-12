@@ -1,23 +1,17 @@
 {
   description = "My personal NUR repository and NixOS/Darwin configurations";
 
-  nixConfig = {
-    substituters = [
-      "https://mirrors.ustc.edu.cn/nix-channels/store"
-      "https://cache.nixos.org"
-    ];
-  };
-
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nix-darwin.url = "github:nix-darwin/nix-darwin/master";
+    nix-darwin.url = "github:LnL7/nix-darwin/master";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
-    # Optional: Declarative tap management
+
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
       flake = false;
@@ -45,9 +39,6 @@
       ...
     }@inputs:
     let
-      # Define system architectures. User should verify/update these as needed.
-      # "MacBookPro" is assumed to be aarch64-darwin.
-      # "NixOS" is a placeholder for a NixOS host, assumed x86_64-linux.
       vars = {
         user = "fwc";
         userEmail = "1643806656@qq.com";
@@ -89,7 +80,22 @@
               useGlobalPkgs = true;
               useUserPackages = true;
               verbose = true;
-              users.${vars.user} = { pkgs, ... }: import ./common/home-manager/default.nix { inherit vars pkgs; };
+              extraSpecialArgs = { inherit vars inputs self; };
+              users.${vars.user} = import ./common/home-manager/default.nix;
+            };
+          }
+          nix-homebrew.darwinModules.nix-homebrew
+          {
+            nix-homebrew = {
+              enable = true;
+              enableRosetta = true;
+              user = "${vars.user}";
+              taps = {
+                "homebrew/homebrew-core" = homebrew-core;
+                "homebrew/homebrew-cask" = homebrew-cask;
+                "homebrew/homebrew-bundle" = homebrew-bundle;
+              };
+              mutableTaps = false;
             };
           }
         ];
@@ -98,23 +104,21 @@
       nixosConfigurations."NixOS" = nixpkgs.lib.nixosSystem {
         system = vars.nixosSystemArch;
         specialArgs = {
-          inherit inputs vars;
+          inherit inputs vars self;
           hostName = "NixOS";
         };
         modules = [
           ./hosts/nixos/default.nix
           home-manager.nixosModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              extraSpecialArgs = { inherit vars inputs self; };
+              users.${vars.user} = import ./common/home-manager/default.nix;
+            };
+          }
         ];
       };
-
-      # Expose the common library from common/lib/default.nix
-      lib = import ./common/lib/default.nix;
-
-      # legacyPackages and packages that relied on a root ./default.nix have been removed.
-      # Users can define overlays or specific packages to be exposed by the flake here if needed.
-      # Example for overlays:
-      # overlays.default = import ./overlays/default.nix;
-      # Example for packages:
-      # packages.${darwinSystemArch}.myTool = inputs.nixpkgs.legacyPackages.${darwinSystemArch}.callPackage ./pkgs/my-tool {};
     };
 }

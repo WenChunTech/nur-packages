@@ -16,7 +16,6 @@
       "nix-command"
       "flakes"
     ];
-    # substituters that will be considered before the official ones(https://cache.nixos.org)
     substituters = [
       "https://mirror.sjtu.edu.cn/nix-channels/store"
       "https://nix-community.cachix.org"
@@ -38,6 +37,4 @@
 
   nix.package = pkgs.nix;
   nixpkgs.config.allowUnfree = true;
-  # The platform the configuration will be used on.
-  # nixpkgs.hostPlatform = "aarch64-darwin";
 }

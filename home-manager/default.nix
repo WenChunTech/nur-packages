@@ -1,10 +1,18 @@
 # common/home-manager/default.nix
-{ vars, pkgs, ... }:
+{
+  vars,
+  pkgs,
+  inputs,
+  self,
+  ...
+}:
 {
   home.stateVersion = "24.11";
   programs.home-manager.enable = true;
   imports = [
-    (import ./zsh.nix { inherit pkgs; })
-    (import ./git.nix { inherit vars; })
+    ./git.nix
+    ./pkg.nix
+    ./static.nix
+    ./zsh.nix
   ];
 }

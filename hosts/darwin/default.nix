@@ -1,11 +1,12 @@
 { vars, ... }:
 {
   imports = [
-    ../../common/modules/users.nix
     ../../common/modules/nix.nix
     ../../common/modules/fonts.nix
-    ./modules/system.nix
+    ./modules/env.nix
     ./modules/homebrew.nix
+    ./modules/system.nix
+    ./modules/users.nix
   ];
 
   nixpkgs.hostPlatform = "${vars.darwinSystemArch}";
